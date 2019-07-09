@@ -1,0 +1,4 @@
+[submodule "nfs-provisioner-k8s"]
+	path = nfs-provisioner-k8s
+	url = https://github.com/Esfahan/nfs-provisioner-k8s.git
+	ignore = dirty
