@@ -24,6 +24,7 @@ AIRFLOW_TAG=${TAG:-latest}
 DIRNAME=$(cd "$(dirname "$0")"; pwd)/manifests
 TEMPLATE_DIRNAME=${DIRNAME}/templates
 BUILD_DIRNAME=${DIRNAME}/build
+NAMESPACE=airflow
 
 usage() {
     cat << EOF
@@ -155,6 +156,9 @@ cat ${BUILD_DIRNAME}/configmaps.yaml
 if [[ "${TRAVIS}" == true ]]; then
   sudo chown -R travis.travis $HOME/.kube $HOME/.minikube
 fi
+
+kubectl apply -f $DIRNAME/namespace.yaml
+kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
 
 kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
 kubectl delete -f $BUILD_DIRNAME/airflow.yaml
