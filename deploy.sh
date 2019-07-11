@@ -169,6 +169,7 @@ ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes.yaml
 
 cat ${BUILD_DIRNAME}/airflow.yaml
 cat ${BUILD_DIRNAME}/configmaps.yaml
+cat ${BUILD_DIRNAME}/namespace.yaml
 cat ${BUILD_DIRNAME}/postgres.yaml
 cat ${BUILD_DIRNAME}/volumes.yaml
 
