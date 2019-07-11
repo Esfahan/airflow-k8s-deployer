@@ -29,18 +29,26 @@ usage() {
     cat << EOF
   usage: $0 options
   OPTIONS:
+    -h help
+    -n Specify Namespace
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
 EOF
     exit 1;
 }
 
-while getopts ":d:r:" OPTION; do
+while getopts ":n:d:r:h" OPTION; do
   case ${OPTION} in
+    n)
+      NAMESPACE=${OPTARG};;
     d)
       DAGS_VOLUME=${OPTARG};;
     r)
       RESOURCE=${OPTARG};;
+    h)
+      usage
+      exit 0
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
@@ -51,6 +59,10 @@ while getopts ":d:r:" OPTION; do
       ;;
   esac
 done
+
+if [ -z "${NAMESPACE}" ]; then
+  NAMESPACE=default
+fi
 
 case ${DAGS_VOLUME} in
   "persistent_mode")
@@ -148,13 +160,26 @@ ${SED_COMMAND} -i "s|{{CONFIGMAP_GIT_DAGS_FOLDER_MOUNT_POINT}}|$CONFIGMAP_GIT_DA
 ${SED_COMMAND} -i "s|{{CONFIGMAP_DAGS_VOLUME_CLAIM}}|$CONFIGMAP_DAGS_VOLUME_CLAIM|g" ${BUILD_DIRNAME}/configmaps.yaml
 
 
+${SED_COMMAND} -i "s|{{NAMESPACE}}|${NAMESPACE}|g" ${BUILD_DIRNAME}/airflow.yaml
+${SED_COMMAND} -i "s|{{NAMESPACE}}|${NAMESPACE}|g" ${BUILD_DIRNAME}/configmaps.yaml
+${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${DIRNAME}/namespace.yaml > ${BUILD_DIRNAME}/namespace.yaml
+${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/postgres.yaml > ${BUILD_DIRNAME}/postgres.yaml
+${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes.yaml > ${BUILD_DIRNAME}/volumes.yaml
+
+
 cat ${BUILD_DIRNAME}/airflow.yaml
 cat ${BUILD_DIRNAME}/configmaps.yaml
+cat ${BUILD_DIRNAME}/namespace.yaml
+cat ${BUILD_DIRNAME}/postgres.yaml
+cat ${BUILD_DIRNAME}/volumes.yaml
 
 # Fix file permissions
 if [[ "${TRAVIS}" == true ]]; then
   sudo chown -R travis.travis $HOME/.kube $HOME/.minikube
 fi
+
+kubectl apply -f $BUILD_DIRNAME/namespace.yaml
+kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
 
 kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
 kubectl delete -f $BUILD_DIRNAME/airflow.yaml
@@ -164,8 +189,8 @@ set -e
 
 kubectl apply -f $DIRNAME/secrets.yaml
 kubectl apply -f $BUILD_DIRNAME/configmaps.yaml
-kubectl apply -f $MANIFEST_DIRNAME/postgres.yaml
-kubectl apply -f $MANIFEST_DIRNAME/volumes.yaml
+kubectl apply -f $BUILD_DIRNAME/postgres.yaml
+kubectl apply -f $BUILD_DIRNAME/volumes.yaml
 kubectl apply -f $BUILD_DIRNAME/airflow.yaml
 
 dump_logs() {

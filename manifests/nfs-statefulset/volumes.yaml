@@ -23,6 +23,7 @@ apiVersion: v1
 metadata:
   # Name for PVC(PersistentVolumeClaim)
   name: airflow-dags
+  namespace: {{NAMESPACE}}
   annotations:
     # Same as metadata.name in storage-class.yml
     volume.kubernetes.io/storage-class: "nfs"
@@ -40,6 +41,7 @@ apiVersion: v1
 metadata:
   # Name for PVC(PersistentVolumeClaim)
   name: airflow-logs
+  namespace: {{NAMESPACE}}
   annotations:
     # Same as metadata.name in storage-class.yml
     volume.kubernetes.io/storage-class: "nfs"
@@ -57,6 +59,7 @@ apiVersion: v1
 metadata:
   # Name for PVC(PersistentVolumeClaim)
   name: test-volume
+  namespace: {{NAMESPACE}}
   annotations:
     # Same as metadata.name in storage-class.yml
     volume.kubernetes.io/storage-class: "nfs"
