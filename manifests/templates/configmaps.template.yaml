@@ -18,7 +18,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: airflow-configmap
-  namespace: airflow
+  namespace: {{NAMESPACE}}
 data:
   airflow.cfg: |
     [core]
@@ -175,7 +175,7 @@ data:
     dags_volume_host =
     logs_volume_host =
     in_cluster = True
-    namespace = airflow
+    namespace = {{NAMESPACE}}
     gcp_service_account_keys =
 
     # Example affinity and toleration definitions.

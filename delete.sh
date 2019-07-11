@@ -1,7 +1,6 @@
 #!/bin/bash
 DIRNAME=$(cd "$(dirname "$0")"; pwd)/manifests
 BUILD_DIRNAME=${DIRNAME}/build
-NAMESPACE=airflow
 
 set -x
 
@@ -9,13 +8,16 @@ usage() {
     cat << EOF
   usage: $0 options
   OPTIONS:
+    -n Specify NAMESPACE
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
 EOF
     exit 1;
 }
 
-while getopts ":r:" OPTION; do
+while getopts ":n:r:" OPTION; do
   case ${OPTION} in
+    n)
+      NAMESPACE=${OPTARG};;
     r)
       RESOURCE=${OPTARG};;
     \?)
@@ -28,6 +30,10 @@ while getopts ":r:" OPTION; do
       ;;
   esac
 done
+
+if [ -z "${NAMESPACE}" ]; then
+  NAMESPACE=default
+fi
 
 if [ -z "${RESOURCE}" ]; then
   echo "Invalid resource: -$RESOURCE" >&2
@@ -46,8 +52,6 @@ case ${RESOURCE} in
     MANIFEST_DIRNAME="${DIRNAME}/default"
     ;;
 esac
-
-
 
 kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
 
