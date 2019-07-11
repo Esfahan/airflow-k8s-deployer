@@ -60,3 +60,4 @@ kubectl delete -f $BUILD_DIRNAME/configmaps.yaml
 kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
 kubectl delete -f $MANIFEST_DIRNAME/volumes.yaml
 kubectl delete -f $BUILD_DIRNAME/airflow.yaml
+#kubectl delete -f $BUILD_DIRNAME/namespace.yaml

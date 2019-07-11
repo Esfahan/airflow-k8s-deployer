@@ -157,6 +157,7 @@ ${SED_COMMAND} -i "s|{{CONFIGMAP_DAGS_VOLUME_CLAIM}}|$CONFIGMAP_DAGS_VOLUME_CLAI
 
 ${SED_COMMAND} -i "s|{{NAMESPACE}}|${NAMESPACE}|g" ${BUILD_DIRNAME}/airflow.yaml
 ${SED_COMMAND} -i "s|{{NAMESPACE}}|${NAMESPACE}|g" ${BUILD_DIRNAME}/configmaps.yaml
+${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${DIRNAME}/namespace.yaml > ${BUILD_DIRNAME}/namespace.yaml
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/postgres.yaml > ${BUILD_DIRNAME}/postgres.yaml
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes.yaml > ${BUILD_DIRNAME}/volumes.yaml
 
@@ -171,7 +172,7 @@ if [[ "${TRAVIS}" == true ]]; then
   sudo chown -R travis.travis $HOME/.kube $HOME/.minikube
 fi
 
-kubectl apply -f $DIRNAME/namespace.yaml
+kubectl apply -f $BUILD_DIRNAME/namespace.yaml
 kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
 
 kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
