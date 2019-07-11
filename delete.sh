@@ -8,18 +8,23 @@ usage() {
     cat << EOF
   usage: $0 options
   OPTIONS:
+    -h help
     -n Specify NAMESPACE
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
 EOF
     exit 1;
 }
 
-while getopts ":n:r:" OPTION; do
+while getopts ":n:r:h" OPTION; do
   case ${OPTION} in
     n)
       NAMESPACE=${OPTARG};;
     r)
       RESOURCE=${OPTARG};;
+    h)
+      usage
+      exit 0
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1

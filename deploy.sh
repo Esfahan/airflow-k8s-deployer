@@ -29,6 +29,7 @@ usage() {
     cat << EOF
   usage: $0 options
   OPTIONS:
+    -h help
     -n Specify Namespace
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
@@ -36,7 +37,7 @@ EOF
     exit 1;
 }
 
-while getopts ":n:d:r:" OPTION; do
+while getopts ":n:d:r:h" OPTION; do
   case ${OPTION} in
     n)
       NAMESPACE=${OPTARG};;
@@ -44,6 +45,10 @@ while getopts ":n:d:r:" OPTION; do
       DAGS_VOLUME=${OPTARG};;
     r)
       RESOURCE=${OPTARG};;
+    h)
+      usage
+      exit 0
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
