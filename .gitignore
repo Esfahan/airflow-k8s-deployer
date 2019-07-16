@@ -1,3 +1,5 @@
 *.swp
 *~
 manifests/build/
+manifests/secrets.yaml
+

@@ -71,21 +71,3 @@ spec:
   resources:
     requests:
       storage: 2Gi
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  # Name for PVC(PersistentVolumeClaim)
-  name: postgres-volume
-  namespace: {{NAMESPACE}}
-  annotations:
-    # Same as metadata.name in storage-class.yml
-    volume.kubernetes.io/storage-class: "nfs"
-spec:
-  accessModes:
-    - ReadWriteMany
-  # Same as metadata.name in storage-class.yml
-  storageClassName: nfs
-  resources:
-    requests:
-      storage: 2Gi

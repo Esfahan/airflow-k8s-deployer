@@ -50,11 +50,14 @@ python                                            3.6-slim            57fa2bc233
 Deploy Airflow containers to Kubernetes.
 
 ```
-$ sudo ./deploy.sh -d {persistent_mode,git_mode} -r {default,dpl,sts}
+$ sudo ./deploy.sh -n {YOUR_NAME_SPACE} -d {persistent_mode,git_mode} -r {default,dpl,sts}
 Usage:
   OPTIONS:
+    -h help
+    -n Specify Namespace
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
-    -r Use default or NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
+    -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
+    -c Use postgres-container or other
 ```
 
 ## WEB UI

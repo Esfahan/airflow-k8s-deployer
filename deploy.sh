@@ -25,6 +25,11 @@ DIRNAME=$(cd "$(dirname "$0")"; pwd)/manifests
 TEMPLATE_DIRNAME=${DIRNAME}/templates
 BUILD_DIRNAME=${DIRNAME}/build
 
+if [ ! -e "$DIRNAME/secrets.yaml" ]; then
+  echo "secrets.yaml doesn't exit. cp $DIRNAME/secrets.example.yaml $DIRNAME/secrets.yaml"
+  exit 1
+fi
+
 usage() {
     cat << EOF
   usage: $0 options
@@ -33,11 +38,12 @@ usage() {
     -n Specify Namespace
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
+    -c Use postgres-container or other
 EOF
     exit 1;
 }
 
-while getopts ":n:d:r:h" OPTION; do
+while getopts ":n:d:r:ch" OPTION; do
   case ${OPTION} in
     n)
       NAMESPACE=${OPTARG};;
@@ -45,6 +51,8 @@ while getopts ":n:d:r:h" OPTION; do
       DAGS_VOLUME=${OPTARG};;
     r)
       RESOURCE=${OPTARG};;
+    c)
+      DB='postgres-container';;
     h)
       usage
       exit 0
@@ -60,10 +68,6 @@ while getopts ":n:d:r:h" OPTION; do
   esac
 done
 
-if [ -z "${NAMESPACE}" ]; then
-  NAMESPACE=default
-fi
-
 case ${DAGS_VOLUME} in
   "persistent_mode")
     GIT_SYNC=0
@@ -74,6 +78,19 @@ case ${DAGS_VOLUME} in
   *)
     echo "Value \"$DAGS_VOLUME\" for dags_folder is not valid." >&2
     usage
+    ;;
+esac
+
+if [ -z "${NAMESPACE}" ]; then
+  NAMESPACE=default
+fi
+
+case ${DB} in
+  "postgres-container")
+    POSTGRES_C=1
+    ;;
+  *)
+    POSTGRES_C=0
     ;;
 esac
 
@@ -166,12 +183,16 @@ ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${DIRNAME}/namespace.yaml > ${BU
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/postgres.yaml > ${BUILD_DIRNAME}/postgres.yaml
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes.yaml > ${BUILD_DIRNAME}/volumes.yaml
 
+if [ "${POSTGRES_C}" == "1" ] && [ "${RESOURCE}" == 'dpl' ]; then
+  ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes-postgres.yaml > ${BUILD_DIRNAME}/volumes-postgres.yaml
+fi
 
-cat ${BUILD_DIRNAME}/airflow.yaml
-cat ${BUILD_DIRNAME}/configmaps.yaml
-cat ${BUILD_DIRNAME}/namespace.yaml
-cat ${BUILD_DIRNAME}/postgres.yaml
-cat ${BUILD_DIRNAME}/volumes.yaml
+
+#cat ${BUILD_DIRNAME}/airflow.yaml
+#cat ${BUILD_DIRNAME}/configmaps.yaml
+#cat ${BUILD_DIRNAME}/namespace.yaml
+#cat ${BUILD_DIRNAME}/postgres.yaml
+#cat ${BUILD_DIRNAME}/volumes.yaml
 
 # Fix file permissions
 if [[ "${TRAVIS}" == true ]]; then
@@ -189,7 +210,14 @@ set -e
 
 kubectl apply -f $DIRNAME/secrets.yaml
 kubectl apply -f $BUILD_DIRNAME/configmaps.yaml
-kubectl apply -f $BUILD_DIRNAME/postgres.yaml
+
+if [ "${POSTGRES_C}" == "1" ]; then
+  kubectl apply -f $BUILD_DIRNAME/postgres.yaml
+  if [ "${RESOURCE}" == 'dpl' ]; then
+    kubectl apply -f $BUILD_DIRNAME/volumes-postgres.yaml
+  fi
+fi
+
 kubectl apply -f $BUILD_DIRNAME/volumes.yaml
 kubectl apply -f $BUILD_DIRNAME/airflow.yaml
 
@@ -220,9 +248,17 @@ do
   echo "$PODS"
   NUM_AIRFLOW_READY=$(echo $PODS | grep airflow | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
   NUM_POSTGRES_READY=$(echo $PODS | grep postgres | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
-  if [ "$NUM_AIRFLOW_READY" == "1" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
-    PODS_ARE_READY=1
-    break
+
+  if [ "${POSTGRES_C}" == "1" ]; then
+    if [ "$NUM_AIRFLOW_READY" == "1" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
+      PODS_ARE_READY=1
+      break
+    fi
+  else
+    if [ "$NUM_AIRFLOW_READY" == "1" ]; then
+      PODS_ARE_READY=1
+      break
+    fi
   fi
   sleep 4
 done
@@ -264,3 +300,5 @@ else
 fi
 
 dump_logs
+
+kubectl get pod | grep airflow

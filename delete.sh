@@ -62,7 +62,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=${NAMES
 
 kubectl delete -f $DIRNAME/secrets.yaml
 kubectl delete -f $BUILD_DIRNAME/configmaps.yaml
-kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
-kubectl delete -f $MANIFEST_DIRNAME/volumes.yaml
+kubectl delete -f $BUILD_DIRNAME/postgres.yaml
 kubectl delete -f $BUILD_DIRNAME/airflow.yaml
+#kubectl delete -f $BUILD_DIRNAME/volumes.yaml
 #kubectl delete -f $BUILD_DIRNAME/namespace.yaml
