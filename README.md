@@ -57,7 +57,7 @@ Usage:
     -n Specify Namespace
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
-    -c Use postgres-container or other
+    -c Use postgres-container
 ```
 
 ## WEB UI
