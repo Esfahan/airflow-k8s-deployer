@@ -28,6 +28,27 @@ $ git submodule update -i && git submodule foreach git pull origin master
 $ sudo ./nfs-provisioner-k8s/nfs-porvisioner/apply.sh
 ```
 
+## Add PyMySQL to Docker Image
+If you use MySQL insted of PostgreSQL,  
+Add `RUN pip install PyMySQL` into [scripts/ci/kubernetes/docker/Dockerfile#L41](https://github.com/apache/airflow/blob/master/scripts/ci/kubernetes/docker/Dockerfile#L41).
+
+Like this.
+
+```diff
+# Since we install vanilla Airflow, we also want to have support for Postgres and Kubernetes
+RUN pip install -U setuptools && \
+    pip install kubernetes && \
+    pip install cryptography && \
+    pip install psycopg2-binary==2.7.4  # I had issues with older versions of psycopg2, just a warning
+
++RUN pip install PyMySQL
+
+# install airflow
+COPY airflow.tar.gz /tmp/airflow.tar.gz
+RUN pip install --no-use-pep517 /tmp/airflow.tar.gz
+```
+
+
 ## Build Docker image
 Build with https://github.com/apache/airflow.git
 
