@@ -39,11 +39,12 @@ usage() {
     -d Use PersistentVolume or GitSync for dags_folder. Available options are "persistent_mode" or "git_mode"
     -r Use NFS with Deployment or NFS with StatefulSet. Available options are "default" or "dpl" or "sts"
     -c Use postgres-container or other
+    -o Set K8S_HOSTNAME
 EOF
     exit 1;
 }
 
-while getopts ":n:d:r:ch" OPTION; do
+while getopts ":n:d:r:o:ch" OPTION; do
   case ${OPTION} in
     n)
       NAMESPACE=${OPTARG};;
@@ -53,6 +54,8 @@ while getopts ":n:d:r:ch" OPTION; do
       RESOURCE=${OPTARG};;
     c)
       DB='postgres-container';;
+    o)
+      K8S_HOSTNAME=${OPTARG};;
     h)
       usage
       exit 0
@@ -80,6 +83,11 @@ case ${DAGS_VOLUME} in
     usage
     ;;
 esac
+
+if [ -z "${K8S_HOSTNAME}" ]; then
+  echo 'Set your cluster hostname with -o'
+  exit 1
+fi
 
 if [ -z "${NAMESPACE}" ]; then
   NAMESPACE=default
@@ -182,17 +190,12 @@ ${SED_COMMAND} -i "s|{{NAMESPACE}}|${NAMESPACE}|g" ${BUILD_DIRNAME}/configmaps.y
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${DIRNAME}/namespace.yaml > ${BUILD_DIRNAME}/namespace.yaml
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/postgres.yaml > ${BUILD_DIRNAME}/postgres.yaml
 ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes.yaml > ${BUILD_DIRNAME}/volumes.yaml
+${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${TEMPLATE_DIRNAME}/ingress.template.yaml > ${BUILD_DIRNAME}/ingress.yaml
+${SED_COMMAND} -i "s|{{K8S_HOSTNAME}}|${K8S_HOSTNAME}|g" ${BUILD_DIRNAME}/ingress.yaml
 
 if [ "${POSTGRES_C}" == "1" ] && [ "${RESOURCE}" == 'dpl' ]; then
   ${SED_COMMAND} "s|{{NAMESPACE}}|${NAMESPACE}|g" ${MANIFEST_DIRNAME}/volumes-postgres.yaml > ${BUILD_DIRNAME}/volumes-postgres.yaml
 fi
-
-
-#cat ${BUILD_DIRNAME}/airflow.yaml
-#cat ${BUILD_DIRNAME}/configmaps.yaml
-#cat ${BUILD_DIRNAME}/namespace.yaml
-#cat ${BUILD_DIRNAME}/postgres.yaml
-#cat ${BUILD_DIRNAME}/volumes.yaml
 
 # Fix file permissions
 if [[ "${TRAVIS}" == true ]]; then
@@ -205,6 +208,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=${NAMES
 kubectl delete -f $MANIFEST_DIRNAME/postgres.yaml
 kubectl delete -f $BUILD_DIRNAME/airflow.yaml
 kubectl delete -f $DIRNAME/secrets.yaml
+kubectl delete -f $BUILD_DIRNAME/ingress.yaml
 
 set -e
 
@@ -220,6 +224,7 @@ fi
 
 kubectl apply -f $BUILD_DIRNAME/volumes.yaml
 kubectl apply -f $BUILD_DIRNAME/airflow.yaml
+kubectl apply -f $BUILD_DIRNAME/ingress.yaml
 
 dump_logs() {
   echo "------- pod description -------"
