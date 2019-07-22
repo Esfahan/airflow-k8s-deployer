@@ -6,7 +6,7 @@ metadata:
   namespace: {{NAMESPACE}}
 spec:
   rules:
-  - host: {{HOSTNAME}}
+  - host: {{K8S_HOSTNAME}}
     http:
       paths:
       - path: /
