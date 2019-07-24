@@ -25,7 +25,7 @@ https://github.com/Esfahan/nfs-provisioner-k8s
 
 ```
 $ git submodule update -i && git submodule foreach git pull origin master
-$ sudo ./nfs-provisioner-k8s/nfs-porvisioner/apply.sh
+$ sudo ./nfs-provisioner-k8s/nfs-provisioner/apply.sh
 ```
 
 ## Add PyMySQL to Docker Image
