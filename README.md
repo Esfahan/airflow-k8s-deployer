@@ -2,11 +2,16 @@
 Deploying Airflow containers to Kubernetes.  
 This repository referred to the original one. => https://github.com/apache/airflow
 
+## Requirements
+- [airflow-1.10.3](https://github.com/apache/airflow/releases/tag/1.10.3)
+
 ## Manifests
 - manifests/templates/airflow.template.yaml
     - A base for build/airflow.yaml
 - manifests/templates/configmaps.template.yaml
     - A base for build/configmaps.yaml
+- manifests/templates/ingress.template.yaml
+    - A base for build/ingress.yaml
 - manifests/templates/init_git_sync.template.yaml
     - A part of airflow.yaml with `git_mode`
 - manigests/secrets.yaml
@@ -28,9 +33,43 @@ $ git submodule update -i && git submodule foreach git pull origin master
 $ sudo ./nfs-provisioner-k8s/nfs-provisioner/apply.sh
 ```
 
+## Patch
+You need this patch for [airflow-1.10.3](https://github.com/apache/airflow/releases/tag/1.10.3)
+
+Ref: [Apache Airflow : airflow initdb results in “ImportError: No module named json”](https://stackoverflow.com/questions/56923003/apache-airflow-airflow-initdb-results-in-importerror-no-module-named-json)
+
+```diff
+$ git diff setup.py
+diff --git a/setup.py b/setup.py
+index 006de0a..95c40ae 100644
+--- a/setup.py
++++ b/setup.py
+@@ -307,7 +307,7 @@ def do_setup():
+             'gunicorn>=19.5.0, <20.0',
+             'iso8601>=0.1.12',
+             'json-merge-patch==0.2',
+-            'jinja2>=2.7.3, <=2.10.0',
++            'jinja2>=2.10.0',
+             'lxml>=4.0.0',
+             'markdown>=2.5.2, <3.0',
+             'pandas>=0.17.1, <1.0.0',
+@@ -324,9 +324,9 @@ def do_setup():
+             'text-unidecode==1.2',
+             'typing;python_version<"3.5"',
+             'thrift>=0.9.2',
+-            'tzlocal>=1.4',
++            'tzlocal>=1.5.0.0, <2.0.0.0',
+             'unicodecsv>=0.14.1',
+-            'werkzeug>=0.14.1, <0.15.0',
++            'werkzeug>=0.15.0',
+             'zope.deprecation>=4.0, <5.0',
+         ],
+         setup_requires=[
+```
+
 ## Add PyMySQL to Docker Image
 If you use MySQL insted of PostgreSQL,  
-Add `RUN pip install PyMySQL` into [scripts/ci/kubernetes/docker/Dockerfile#L41](https://github.com/apache/airflow/blob/master/scripts/ci/kubernetes/docker/Dockerfile#L41).
+Add `RUN pip install PyMySQL` into [scripts/ci/kubernetes/docker/Dockerfile#L41](https://github.com/apache/airflow/blob/1.10.3/scripts/ci/kubernetes/docker/Dockerfile).
 
 Like this.
 
@@ -55,7 +94,7 @@ Build with https://github.com/apache/airflow.git
 ```
 $ git clone https://github.com/apache/airflow.git
 $ cd airflow
-$ sudo ./scripts/ci/kubernetes/docker/build.sh
+$ sudo SLUGIFY_USES_TEXT_UNIDECODE=yes PYTHON_VERSION=3 ./scripts/ci/kubernetes/docker/build.sh
 ```
 
 Check the built images as below.
@@ -64,7 +103,9 @@ Check the built images as below.
 $ sudo docker images
 REPOSITORY                                        TAG                 IMAGE ID            CREATED             SIZE
 airflow                                           latest              7701b2257310        12 seconds ago      758MB
-python                                            3.6-slim            57fa2bc2339a        6 hours ago         142MB
+ubuntu                                            16.04               5e13f8dd4c1a        12 seconds ago      120MB
+postgres                                          latest              53912975086f        12 seconds ago      312MB
+python                                            3.6-slim            57fa2bc2339a        12 seconds ago      142MB
 ```
 
 ## Deploy
@@ -82,6 +123,10 @@ Usage:
 ```
 
 ## WEB UI
+### With Ingress
+http://{YOUR_HOST_NAME}
+
+### Without Ingress
 Forward port to browse web ui.
 
 Check the pod name of Airflow with command below.
@@ -99,7 +144,7 @@ $ sudo kubectl port-forward [PodName of Airflow] 8080:8080 --address="0.0.0.0"
 http://{YOUR_HOST_NAME}:8080
 
 Check your default account created when Docker Image is built with code below.  
-[airflow/scripts/ci/kubernetes/docker/airflow-test-env-init.sh](https://github.com/apache/airflow/blob/0ac501faa976a3bdc91ad9455c8de83c6b4abdd0/scripts/ci/kubernetes/docker/airflow-test-env-init.sh#L28)
+[airflow/scripts/ci/kubernetes/docker/airflow-test-env-init.sh](https://github.com/apache/airflow/blob/1.10.3/scripts/ci/kubernetes/docker/airflow-test-env-init.sh#L28)
 
 ## Differences to the original deploy.sh
-Original => [deploy.sh](https://github.com/apache/airflow/blob/f710a0db493f89829849fb17230060f91e3925d2/scripts/ci/kubernetes/kube/deploy.sh)
+Original => [scripts/ci/kubernetes/kube/deploy.sh](https://github.com/apache/airflow/blob/1.10.3/scripts/ci/kubernetes/kube/deploy.sh)
