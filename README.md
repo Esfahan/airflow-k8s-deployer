@@ -34,12 +34,16 @@ $ sudo ./nfs-provisioner-k8s/nfs-provisioner/apply.sh
 ```
 
 ## Patch
-You need this patch for [airflow-1.10.3](https://github.com/apache/airflow/releases/tag/1.10.3)
+You need this patch for [airflow-1.10.3](https://github.com/apache/airflow/releases/tag/1.10.3).  
+flask-1.1.1 needs the following modules, but airflow-1.10.3 doesn't meet the requirements.
+
+- jinja2>=2.10.0
+- tzlocal>=1.5.0.0, <2.0.0.0
+- werkzeug>=0.15.0
 
 Ref: [Apache Airflow : airflow initdb results in “ImportError: No module named json”](https://stackoverflow.com/questions/56923003/apache-airflow-airflow-initdb-results-in-importerror-no-module-named-json)
 
 ```diff
-$ git diff setup.py
 diff --git a/setup.py b/setup.py
 index 006de0a..95c40ae 100644
 --- a/setup.py
