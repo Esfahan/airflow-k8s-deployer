@@ -1,6 +1,8 @@
 # airflow-k8s-deployer
-Deploying Airflow containers to Kubernetes.  
-This repository referred to the original one. => https://github.com/apache/airflow
+Deploying Airflow containers to Kubernetes.
+
+This repository referred to the original one.  
+https://github.com/apache/airflow/tree/1.10.3/scripts/ci/kubernetes/kube
 
 ## Requirements
 - [airflow-1.10.3](https://github.com/apache/airflow/releases/tag/1.10.3)
@@ -150,5 +152,3 @@ http://{YOUR_HOST_NAME}:8080
 Check your default account created when Docker Image is built with code below.  
 [airflow/scripts/ci/kubernetes/docker/airflow-test-env-init.sh](https://github.com/apache/airflow/blob/1.10.3/scripts/ci/kubernetes/docker/airflow-test-env-init.sh#L28)
 
-## Differences to the original deploy.sh
-Original => [scripts/ci/kubernetes/kube/deploy.sh](https://github.com/apache/airflow/blob/1.10.3/scripts/ci/kubernetes/kube/deploy.sh)
