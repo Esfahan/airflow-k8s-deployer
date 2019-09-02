@@ -30,7 +30,8 @@ data:
     load_examples = False
     plugins_folder = /root/airflow/plugins
     sql_alchemy_conn = $SQL_ALCHEMY_CONN
-    default_timezone = Asia/Tokyo
+    #default_timezone = Asia/Tokyo
+    default_timezone = utc
 
     [scheduler]
     dag_dir_list_interval = 300
